@@ -66,7 +66,7 @@ export const ComposeModal: React.FC<Props> = ({ navigation }) => {
       .eq('status', 'active');
       
     if (data) {
-      const formatted = data.map(d => d.circles);
+      const formatted = data.map(d => d.circles as unknown as { id: string, name: string });
       setCircles(formatted);
       setSelectedCircles(new Set(formatted.map(c => c.id)));
     }

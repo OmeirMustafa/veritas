@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions, NavigationProp } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
@@ -61,8 +61,7 @@ function MainTabNavigator() {
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             e.preventDefault();
-            // Since Compose is at the root stack, we navigate to it directly
-            navigation.navigate('Compose');
+            (navigation as unknown as NavigationProp<RootStackParamList>).navigate('Compose');
           },
         })}
       />
@@ -75,7 +74,7 @@ function MainTabNavigator() {
   );
 }
 
-const linking = {
+const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['veritas://', 'https://veritas.app'],
   config: {
     screens: {
