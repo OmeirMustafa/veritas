@@ -4,12 +4,19 @@ import { colors, typography, spacing, radius } from '../../theme';
 import { Button } from '../../components/ui/Button';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
+import { generateGrowthPassport, GrowthTheme } from '../../lib/ai';
 import { Ionicons } from '@expo/vector-icons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../types/navigation';
+import { useNavigation } from '@react-navigation/native';
 
 export const YouScreen: React.FC = () => {
   const { user } = useAuthStore();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [streak, setStreak] = useState(0);
   const [memberSince, setMemberSince] = useState('');
+  const [themes, setThemes] = useState<GrowthTheme[]>([]);
+  const [loadingThemes, setLoadingThemes] = useState(false);
 
   // Dummy data for heatmap - 52 columns, 7 rows
   const heatmapData = Array.from({ length: 52 }, () =>
@@ -21,9 +28,71 @@ export const YouScreen: React.FC = () => {
       const date = new Date(user.created_at);
       setMemberSince(date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
     }
-    // Simulate calculating streak
-    setStreak(12);
+    if (user?.id) {
+      loadThemes(user.id);
+      calculateStreak(user.id);
+    }
   }, [user]);
+
+  const calculateStreak = async (userId: string) => {
+    try {
+      const { data: posts, error } = await supabase
+        .from('posts')
+        .select('post_date')
+        .eq('user_id', userId)
+        .order('post_date', { ascending: false });
+
+      if (error || !posts) {
+        setStreak(0);
+        return;
+      }
+
+      let currentStreak = 0;
+      let checkDate = new Date(); // Start with today
+
+      // We only consider dates in YYYY-MM-DD format
+      const dateStrings = new Set(posts.map(p => p.post_date));
+
+      // If they haven't posted today, check if they posted yesterday
+      const todayStr = checkDate.toISOString().split('T')[0];
+      const yesterday = new Date(checkDate);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      if (!dateStrings.has(todayStr) && !dateStrings.has(yesterdayStr)) {
+        setStreak(0);
+        return;
+      }
+
+      // If they haven't posted today, but did yesterday, start counting from yesterday
+      if (!dateStrings.has(todayStr) && dateStrings.has(yesterdayStr)) {
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+
+      // Traverse backwards day by day
+      while (true) {
+        const currentStr = checkDate.toISOString().split('T')[0];
+        if (dateStrings.has(currentStr)) {
+          currentStreak++;
+          checkDate.setDate(checkDate.getDate() - 1); // move back one day
+        } else {
+          break;
+        }
+      }
+
+      setStreak(currentStreak);
+    } catch (e) {
+      console.error(e);
+      setStreak(0);
+    }
+  };
+
+  const loadThemes = async (userId: string) => {
+    setLoadingThemes(true);
+    const generatedThemes = await generateGrowthPassport(userId);
+    setThemes(generatedThemes);
+    setLoadingThemes(false);
+  };
 
   const getInitials = (name: string) => {
     return name ? name.substring(0, 2).toUpperCase() : '?';
@@ -92,20 +161,31 @@ export const YouScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Growth Passport</Text>
           <Text style={styles.sectionSubtitle}>AI-generated themes from your reflections</Text>
           
-          <View style={styles.themeCard}>
-            <Text style={styles.themeLabel}>Seeking Stillness</Text>
-            <Text style={styles.themeDesc}>You've been navigating a noisy season by intentionally creating quiet moments. This theme appears strongly in your weekend reflections.</Text>
-          </View>
+          {loadingThemes ? (
+            <Text style={styles.themeDesc}>Analyzing your recent reflections...</Text>
+          ) : themes.length > 0 ? (
+            themes.map((theme, index) => (
+              <View key={index} style={styles.themeCard}>
+                <Text style={styles.themeLabel}>{theme.label}</Text>
+                <Text style={styles.themeDesc}>{theme.description}</Text>
+              </View>
+            ))
+          ) : (
+            <View style={styles.themeCard}>
+              <Text style={styles.themeLabel}>Keep Posting</Text>
+              <Text style={styles.themeDesc}>We need a few more daily reflections to generate your unique growth themes. Keep showing up.</Text>
+            </View>
+          )}
+        </View>
 
-          <View style={styles.themeCard}>
-            <Text style={styles.themeLabel}>Relational Depth</Text>
-            <Text style={styles.themeDesc}>There is a recurring focus on moving past surface-level interactions. You're craving authenticity in your friendships.</Text>
-          </View>
-
-          <View style={styles.themeCard}>
-            <Text style={styles.themeLabel}>Embracing Uncertainty</Text>
-            <Text style={styles.themeDesc}>You are learning to sit with unanswered questions rather than rushing to solve them. This shows immense personal growth.</Text>
-          </View>
+        <View style={styles.memoirSection}>
+          <Text style={styles.sectionTitle}>Your Narrative</Text>
+          <Text style={styles.sectionSubtitle}>Looking back at your journey</Text>
+          <Button 
+            title={`Read ${new Date().getFullYear()} Memoir`}
+            onPress={() => navigation.navigate('Memoir', { year: new Date().getFullYear() })}
+            variant="outline"
+          />
         </View>
 
       </ScrollView>
@@ -271,5 +351,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 22,
+  },
+  memoirSection: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.xxl,
   },
 });

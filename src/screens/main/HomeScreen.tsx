@@ -4,8 +4,12 @@ import { colors, typography, spacing } from '../../theme';
 import { PostCard, Post } from '../../components/feed/PostCard';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { MainTabParamList } from '../../types/navigation';
 
-export const HomeScreen: React.FC = () => {
+type Props = NativeStackScreenProps<MainTabParamList, 'Home'>;
+
+export const HomeScreen: React.FC<Props> = ({ route }) => {
   const { user } = useAuthStore();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +33,39 @@ export const HomeScreen: React.FC = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  useEffect(() => {
+    // Handling invite token from deep link
+    const token = (route.params as any)?.token;
+    if (token && user) {
+      handleInvite(token);
+    }
+  }, [route.params, user]);
+
+  const handleInvite = async (token: string) => {
+    try {
+      const { data: invite, error } = await supabase
+        .from('invitations')
+        .select('*')
+        .eq('token', token)
+        .is('accepted_at', null)
+        .single();
+        
+      if (invite) {
+        await supabase.from('circle_members').insert({
+          circle_id: invite.circle_id,
+          user_id: user?.id,
+          status: 'active'
+        });
+        
+        await supabase.from('invitations').update({ accepted_at: new Date().toISOString() }).eq('id', invite.id);
+        alert('Successfully joined the circle!');
+        fetchPosts();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchPosts = async () => {
     if (!user) return;

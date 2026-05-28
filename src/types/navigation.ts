@@ -20,4 +20,5 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   Main: NavigatorScreenParams<MainTabParamList>;
   Compose: undefined; // Full screen modal
+  Memoir: { year: number };
 };

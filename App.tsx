@@ -17,6 +17,7 @@ import { OnboardingScreen } from './src/screens/auth/OnboardingScreen';
 import { HomeScreen } from './src/screens/main/HomeScreen';
 import { YouScreen } from './src/screens/main/YouScreen';
 import { ComposeModal } from './src/screens/compose/ComposeModal';
+import { MemoirScreen } from './src/screens/main/MemoirScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
@@ -74,6 +75,19 @@ function MainTabNavigator() {
   );
 }
 
+const linking = {
+  prefixes: ['veritas://', 'https://veritas.app'],
+  config: {
+    screens: {
+      Main: {
+        screens: {
+          Home: 'invite/:token',
+        }
+      }
+    }
+  }
+};
+
 export default function App() {
   const { session, isLoading, setSession, setLoading } = useAuthStore();
 
@@ -99,7 +113,7 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {session ? (
           <>
@@ -111,6 +125,13 @@ export default function App() {
                 presentation: 'fullScreenModal',
                 animation: 'fade_from_bottom',
                 animationDuration: 350,
+              }} 
+            />
+            <RootStack.Screen 
+              name="Memoir" 
+              component={MemoirScreen} 
+              options={{ 
+                presentation: 'card',
               }} 
             />
           </>

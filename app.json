@@ -3,6 +3,7 @@
     "name": "VERITAS",
     "slug": "VERITAS",
     "version": "1.0.0",
+    "scheme": "veritas",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
