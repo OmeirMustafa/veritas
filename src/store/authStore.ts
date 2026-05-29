@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 import { Session, User } from '@supabase/supabase-js';
 
+export interface UserProfile {
+  id: string;
+  display_name: string;
+  avatar_url?: string;
+}
+
 interface AuthState {
   session: Session | null;
   user: User | null;
-  profile: any | null; // We'll type this properly later
+  profile: UserProfile | null;
   isLoading: boolean;
   setSession: (session: Session | null) => void;
-  setProfile: (profile: any | null) => void;
+  setProfile: (profile: UserProfile | null) => void;
   setLoading: (isLoading: boolean) => void;
 }
 

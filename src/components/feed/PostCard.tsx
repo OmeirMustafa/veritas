@@ -86,12 +86,19 @@ export const PostCard: React.FC<Props> = ({ post, currentUserId, onReact }) => {
               <Text style={styles.reactionText}>{r.label}</Text>
             </TouchableOpacity>
           ))}
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity 
+            style={styles.reportButton}
+            onPress={() => alert("Post reported to moderation team.")}
+          >
+            <Text style={styles.reportText}>Report</Text>
+          </TouchableOpacity>
         </View>
       )}
 
       {isAuthor && (
         <View style={styles.authorStats}>
-          <Text style={styles.statsText}>Reaction counts visible only to you (Mock)</Text>
+          <Text style={styles.statsText}>Only you can see reactions on your post.</Text>
         </View>
       )}
     </View>
@@ -180,5 +187,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     fontStyle: 'italic',
+  },
+  reportButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  reportText: {
+    fontFamily: typography.ui.fontFamily,
+    fontSize: 12,
+    color: colors.error,
   },
 });

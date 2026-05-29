@@ -49,10 +49,11 @@ export const SignInScreen: React.FC<Props> = ({ navigation }) => {
       } else {
         setSuccessMessage('We sent you a magic link! Check your email to sign in.');
       }
-    } catch (err: any) {
-      const message = err?.message === 'Failed to fetch'
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      const message = errorObj?.message === 'Failed to fetch'
         ? 'Could not connect to server. Please check your internet connection and try again.'
-        : (err?.message || 'An unexpected error occurred.');
+        : (errorObj?.message || 'An unexpected error occurred.');
       setErrorMessage(message);
     } finally {
       setLoading(false);

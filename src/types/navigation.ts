@@ -11,8 +11,8 @@ export type AuthStackParamList = {
 
 // Main App Tab Navigator
 export type MainTabParamList = {
-  Home: undefined;
-  ComposeModal: undefined; // Not a real tab, handled via listener or stack
+  Home: { token?: string };
+  ComposeModal: undefined;
   You: undefined;
 };
 
@@ -22,4 +22,6 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList>;
   Compose: undefined; // Full screen modal
   Memoir: { year: number };
+  Settings: undefined;
+  NotFound: undefined;
 };

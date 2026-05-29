@@ -22,7 +22,7 @@ export const ComposeModal: React.FC<Props> = ({ navigation }) => {
   const [showPrompt, setShowPrompt] = useState(true);
   const [loading, setLoading] = useState(false);
   const [existingPostId, setExistingPostId] = useState<string | null>(null);
-  const [circles, setCircles] = useState<any[]>([]);
+  const [circles, setCircles] = useState<{id: string, name: string}[]>([]);
   const [selectedCircles, setSelectedCircles] = useState<Set<string>>(new Set());
 
   useEffect(() => {

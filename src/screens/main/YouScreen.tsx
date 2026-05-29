@@ -111,7 +111,7 @@ export const YouScreen: React.FC = () => {
         
         <View style={styles.header}>
           <Text style={styles.title}>You</Text>
-          <TouchableOpacity onPress={() => supabase.auth.signOut()}>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
             <Ionicons name="settings-outline" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>

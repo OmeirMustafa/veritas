@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, FlatList } from 'react-native';
 import { colors, typography, spacing } from '../../theme';
 import { PostCard, Post } from '../../components/feed/PostCard';
 import { supabase } from '../../lib/supabase';
@@ -36,7 +36,7 @@ export const HomeScreen: React.FC<Props> = ({ route }) => {
 
   useEffect(() => {
     // Handling invite token from deep link
-    const token = (route.params as any)?.token;
+    const token = route.params?.token;
     if (token && user) {
       handleInvite(token);
     }
@@ -44,17 +44,17 @@ export const HomeScreen: React.FC<Props> = ({ route }) => {
 
   const handleInvite = async (token: string) => {
     try {
-      const { data: invite, error } = await supabase
+      const { data: invite } = await supabase
         .from('invitations')
         .select('*')
         .eq('token', token)
         .is('accepted_at', null)
         .single();
         
-      if (invite) {
+      if (invite && user?.id) {
         await supabase.from('circle_members').insert({
           circle_id: invite.circle_id,
-          user_id: user?.id,
+          user_id: user.id,
           status: 'active'
         });
         
@@ -63,16 +63,12 @@ export const HomeScreen: React.FC<Props> = ({ route }) => {
         fetchPosts();
       }
     } catch (e) {
-      console.error(e);
+      // Ignore invite errors in UI
     }
   };
 
   const fetchPosts = async () => {
     if (!user) return;
-    // We are simulating fetching posts from circles.
-    // In actual implementation, we join with post_circles and circle_members
-    // and filter for last 24 hours: `created_at > now() - interval '24 hours'`
-    // Sorted chronological: `.order('created_at', { ascending: true })`
     
     const { data, error } = await supabase
       .from('posts')
@@ -101,33 +97,36 @@ export const HomeScreen: React.FC<Props> = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView 
-        style={styles.container} 
+      <FlatList
+        style={styles.container}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
-        bounces={false} // No pull to refresh affordance
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>Today</Text>
-        </View>
-
-        {posts.map((post) => (
+        bounces={false}
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
           <PostCard 
-            key={post.id} 
-            post={post} 
+            post={item} 
             currentUserId={user?.id || ''} 
             onReact={handleReact} 
           />
-        ))}
-
-        {!loading && (
-          <View style={styles.endState}>
-            {/* Simple centered illustration (placeholder for SVG) */}
-            <View style={styles.illustrationPlaceholder} />
-            <Text style={styles.endStateText}>You've witnessed everyone today.</Text>
-          </View>
         )}
-      </ScrollView>
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>Today</Text>
+          </View>
+        }
+        ListFooterComponent={
+          !loading ? (
+            <View style={styles.endState}>
+              <View style={styles.illustrationPlaceholder} />
+              <Text style={styles.endStateText}>
+                {posts.length === 0 ? "Your circle is quiet today." : "You've witnessed everyone today."}
+              </Text>
+            </View>
+          ) : null
+        }
+      />
     </SafeAreaView>
   );
 };

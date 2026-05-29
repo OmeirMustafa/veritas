@@ -50,8 +50,8 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.timePlaceholder}>8:00 PM</Text>
       </View>
       <View style={styles.footer}>
-        <Button title="Complete Setup" onPress={() => { /* Transition to Main App via store later */ }} />
-        <Button title="Skip notifications" variant="secondary" onPress={() => { /* Transition to Main App */ }} />
+        <Button title="Complete Setup" onPress={() => navigation.navigate('SignUp')} />
+        <Button title="Skip notifications" variant="secondary" onPress={() => navigation.navigate('SignUp')} />
       </View>
     </View>
   );

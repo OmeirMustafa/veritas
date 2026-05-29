@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer, LinkingOptions, NavigationProp } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
@@ -19,6 +19,8 @@ import { HomeScreen } from './src/screens/main/HomeScreen';
 import { YouScreen } from './src/screens/main/YouScreen';
 import { ComposeModal } from './src/screens/compose/ComposeModal';
 import { MemoirScreen } from './src/screens/main/MemoirScreen';
+import { SettingsScreen } from './src/screens/main/SettingsScreen';
+import { NotFoundScreen } from './src/screens/main/NotFoundScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
@@ -36,7 +38,7 @@ function AuthNavigator() {
   );
 }
 
-const DummyComponent = () => null;
+const ComposePlaceholder = () => null;
 
 function MainTabNavigator() {
   return (
@@ -58,12 +60,13 @@ function MainTabNavigator() {
       />
       <MainTab.Screen 
         name="ComposeModal" 
-        component={DummyComponent} 
+        // We use a custom listener to open the modal instead of navigating to a tab screen
+        component={ComposePlaceholder as any} 
         options={{ tabBarLabel: 'Post' }}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             e.preventDefault();
-            (navigation as unknown as NavigationProp<RootStackParamList>).navigate('Compose');
+            (navigation as any).navigate('Compose');
           },
         })}
       />
@@ -79,12 +82,30 @@ function MainTabNavigator() {
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['veritas://', 'https://veritas.app'],
   config: {
+    initialRouteName: 'Main',
     screens: {
-      Main: {
+      Auth: {
+        path: 'auth',
         screens: {
-          Home: 'invite/:token',
+          Welcome: 'welcome',
+          SignIn: 'signin',
+          SignUp: 'signup',
+          Onboarding: 'onboarding',
+          Legal: 'legal',
         }
-      }
+      },
+      Main: {
+        path: '',
+        initialRouteName: 'Home',
+        screens: {
+          Home: 'invite/:token?',
+          You: 'you',
+        }
+      },
+      Compose: 'compose',
+      Memoir: 'memoir/:year',
+      Settings: 'settings',
+      NotFound: '*',
     }
   }
 };
@@ -135,9 +156,14 @@ export default function App() {
                 presentation: 'card',
               }} 
             />
+            <RootStack.Screen name="Settings" component={SettingsScreen} options={{ presentation: 'modal' }} />
+            <RootStack.Screen name="NotFound" component={NotFoundScreen} />
           </>
         ) : (
-          <RootStack.Screen name="Auth" component={AuthNavigator} />
+          <>
+            <RootStack.Screen name="Auth" component={AuthNavigator} />
+            <RootStack.Screen name="NotFound" component={NotFoundScreen} />
+          </>
         )}
       </RootStack.Navigator>
     </NavigationContainer>
