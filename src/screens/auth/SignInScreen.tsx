@@ -5,7 +5,7 @@ import { AuthStackParamList } from '../../types/navigation';
 import { colors, typography, spacing } from '../../theme';
 import { Button } from '../../components/ui/Button';
 import { TextInput } from '../../components/ui/TextInput';
-import { supabase } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 type SignInScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'SignIn'>;
 
@@ -19,24 +19,38 @@ export const SignInScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleSignIn = async () => {
     if (!email) return;
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false, // Don't create on signin, use signup screen for new users
-      }
-    });
 
-    setLoading(false);
-    if (error) {
-      if (error.message.includes('Signups not allowed')) {
-        Alert.alert('Account not found', 'Please sign up first.');
-        navigation.navigate('SignUp');
+    if (!isSupabaseConfigured()) {
+      Alert.alert('Configuration Error', 'App is not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env file.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false, // Don't create on signin, use signup screen for new users
+        }
+      });
+
+      if (error) {
+        if (error.message.includes('Signups not allowed')) {
+          Alert.alert('Account not found', 'Please sign up first.');
+          navigation.navigate('SignUp');
+        } else {
+          Alert.alert('Error', error.message);
+        }
       } else {
-        Alert.alert('Error', error.message);
+        Alert.alert('Check your email', 'We sent you a magic link to sign in.');
       }
-    } else {
-      Alert.alert('Check your email', 'We sent you a magic link to sign in.');
+    } catch (err: any) {
+      const message = err?.message === 'Failed to fetch'
+        ? 'Could not connect to server. Please check your internet connection and try again.'
+        : (err?.message || 'An unexpected error occurred.');
+      Alert.alert('Connection Error', message);
+    } finally {
+      setLoading(false);
     }
   };
 

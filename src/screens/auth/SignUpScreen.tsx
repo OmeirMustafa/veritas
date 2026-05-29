@@ -5,7 +5,7 @@ import { AuthStackParamList } from '../../types/navigation';
 import { colors, typography, spacing } from '../../theme';
 import { Button } from '../../components/ui/Button';
 import { TextInput } from '../../components/ui/TextInput';
-import { supabase } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 type SignUpScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'SignUp'>;
 
@@ -23,28 +23,43 @@ export const SignUpScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleSignUp = async () => {
     if (!email || !displayName || !agreedToTerms) return;
+    
+    if (!isSupabaseConfigured()) {
+      setErrorMessage('App is not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env file.');
+      return;
+    }
+
     setLoading(true);
     setErrorMessage('');
     setSuccessMessage('');
     
-    // Using magic link for sign up as well
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        data: {
-          display_name: displayName,
+    try {
+      // Using magic link for sign up as well
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          data: {
+            display_name: displayName,
+          }
         }
-      }
-    });
+      });
 
-    setLoading(false);
-    if (error) {
-      setErrorMessage(error.message);
-      Alert.alert('Error', error.message);
-    } else {
-      setSuccessMessage('We sent you a magic link to complete sign up. Check your email!');
-      Alert.alert('Check your email', 'We sent you a magic link to complete sign up.');
+      if (error) {
+        setErrorMessage(error.message);
+        Alert.alert('Error', error.message);
+      } else {
+        setSuccessMessage('We sent you a magic link to complete sign up. Check your email!');
+        Alert.alert('Check your email', 'We sent you a magic link to complete sign up.');
+      }
+    } catch (err: any) {
+      const message = err?.message === 'Failed to fetch'
+        ? 'Could not connect to server. Please check your internet connection and try again.'
+        : (err?.message || 'An unexpected error occurred.');
+      setErrorMessage(message);
+      Alert.alert('Connection Error', message);
+    } finally {
+      setLoading(false);
     }
   };
 
