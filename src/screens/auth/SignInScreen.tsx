@@ -16,16 +16,21 @@ interface Props {
 export const SignInScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSignIn = async () => {
     if (!email) return;
 
     if (!isSupabaseConfigured()) {
-      Alert.alert('Configuration Error', 'App is not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env file.');
+      setErrorMessage('App is not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env file.');
       return;
     }
 
     setLoading(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -36,19 +41,19 @@ export const SignInScreen: React.FC<Props> = ({ navigation }) => {
 
       if (error) {
         if (error.message.includes('Signups not allowed')) {
-          Alert.alert('Account not found', 'Please sign up first.');
-          navigation.navigate('SignUp');
+          setErrorMessage('No account found with this email. Redirecting to sign up...');
+          setTimeout(() => navigation.navigate('SignUp'), 1500);
         } else {
-          Alert.alert('Error', error.message);
+          setErrorMessage(error.message);
         }
       } else {
-        Alert.alert('Check your email', 'We sent you a magic link to sign in.');
+        setSuccessMessage('We sent you a magic link! Check your email to sign in.');
       }
     } catch (err: any) {
       const message = err?.message === 'Failed to fetch'
         ? 'Could not connect to server. Please check your internet connection and try again.'
         : (err?.message || 'An unexpected error occurred.');
-      Alert.alert('Connection Error', message);
+      setErrorMessage(message);
     } finally {
       setLoading(false);
     }
@@ -71,6 +76,9 @@ export const SignInScreen: React.FC<Props> = ({ navigation }) => {
             keyboardType="email-address"
             autoComplete="email"
           />
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+          {successMessage ? <Text style={styles.successText}>{successMessage}</Text> : null}
           
           <Button 
             title={loading ? "Sending..." : "Send Magic Link"} 
@@ -114,5 +122,15 @@ const styles = StyleSheet.create({
   button: {
     marginTop: spacing.lg,
     marginBottom: spacing.md,
+  },
+  errorText: {
+    color: '#e74c3c',
+    marginBottom: spacing.md,
+    fontSize: 14,
+  },
+  successText: {
+    color: '#27ae60',
+    marginBottom: spacing.md,
+    fontSize: 14,
   },
 });
