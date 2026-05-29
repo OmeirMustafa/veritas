@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   paragraph: {
     fontSize: 16,
-    color: colors.text,
+    color: colors.textPrimary,
     lineHeight: 24,
     marginBottom: spacing.md,
   },
