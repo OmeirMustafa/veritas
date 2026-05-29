@@ -6,6 +6,7 @@ export type AuthStackParamList = {
   SignUp: undefined;
   SignIn: undefined;
   Onboarding: undefined;
+  Legal: undefined;
 };
 
 // Main App Tab Navigator

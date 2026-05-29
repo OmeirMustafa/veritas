@@ -13,6 +13,7 @@ import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { SignUpScreen } from './src/screens/auth/SignUpScreen';
 import { SignInScreen } from './src/screens/auth/SignInScreen';
 import { OnboardingScreen } from './src/screens/auth/OnboardingScreen';
+import { LegalScreen } from './src/screens/auth/LegalScreen';
 
 import { HomeScreen } from './src/screens/main/HomeScreen';
 import { YouScreen } from './src/screens/main/YouScreen';
@@ -30,6 +31,7 @@ function AuthNavigator() {
       <AuthStack.Screen name="SignUp" component={SignUpScreen} />
       <AuthStack.Screen name="SignIn" component={SignInScreen} />
       <AuthStack.Screen name="Onboarding" component={OnboardingScreen} />
+      <AuthStack.Screen name="Legal" component={LegalScreen} options={{ presentation: 'modal' }} />
     </AuthStack.Navigator>
   );
 }
